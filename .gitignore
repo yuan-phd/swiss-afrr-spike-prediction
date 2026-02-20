@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+*.env
+secrets.yaml
+config/secrets/
+
+# uv / Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.python-version
+
+# Data files — never commit raw or processed data to Git
+data/raw/
+data/processed/
+*.xlsx
+*.csv
+*.parquet
+
+# Results & figures — generated, not source
+01_causal_inference/results/
+
+# Databricks
+.databricks/
+
+# macOS
+.DS_Store
