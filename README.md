@@ -157,6 +157,41 @@ uv run mlflow ui --backend-store-uri mlruns
 ---
 
 ## Key Charts
+---
+
+## Key Results
+
+### Part 1 — Causal Validation
+
+**Cross-correlation by lag — German wind error → Swiss unplanned flow → aFRR spike**
+![Cross-correlation by lag](docs/figures/03_cross_correlation_by_lag.png)
+*The causal chain has measurable timing: unplanned flow peaks 30-60 minutes 
+after a German wind forecast error, and spike probability peaks shortly after. 
+This propagation delay is the physical fingerprint of the mechanism — 
+not a statistical artefact.*
+
+**Spike probability by unplanned flow quintile — 2025 out-of-sample validation**
+![Spike probability by quintile](docs/figures/05_spike_probability_quintile.png)
+*Spike probability doubles (×2.19x) from the lowest to highest unplanned flow 
+quintile. Critically, this relationship holds in 2025 despite a +51 EUR/MWh 
+market-wide price shift — confirming the physical mechanism is regime-invariant.*
+
+---
+
+### Part 2 — Model Validation
+
+**SHAP dependence — 1250 MW physical bottleneck confirmed**
+![SHAP 1250 MW threshold](docs/figures/shap_dependence_abs_flow.png)
+*SHAP values are negative below 1250 MW (flow reduces spike risk) and sharply 
+positive above it. The model discovered the physical bid-ladder bottleneck 
+without being told the threshold exists — confirming it learned the causal 
+mechanism, not a spurious pattern.*
+
+**Calibration before and after isotonic regression**
+![Calibration improvement](docs/figures/calibration_v2.png)
+*Brier score reduced 47% (0.118 → 0.062). Predicted probabilities now reflect 
+true spike rates across all confidence levels — a requirement for using model 
+output in trading position sizing.*
 
 ### SHAP Dependence — 1250 MW Physical Threshold
 The model learned the physical bid-ladder mechanism. SHAP values are negative (flow reduces spike risk) below 1250 MW and sharply positive above it — matching the known grid bottleneck.
