@@ -1,0 +1,140 @@
+# ================================================================================
+# config.yaml v2 — Swiss aFRR Spike Prediction Model
+# Changes from v1:
+#   - Removed hour, month, day_of_week (temporal bias fix)
+#   - Replaced raw lag features with price_delta z-scores (regime invariance)
+#   - Added price_vs_threshold lag features
+#   - Stronger regularisation (min_child_weight, gamma, max_depth)
+#   - Added isotonic calibration
+# ================================================================================
+
+# ── Paths ────────────────────────────────────────────────────────────────────
+paths:
+  train_csv:     "data/processed/features_train_2023_2024.csv"
+  val_csv:       "data/processed/features_val_2025.csv"
+  model_dir:     "02_model_training/models"
+  results_dir:   "02_model_training/results"
+  figures_dir:   "02_model_training/results/figures"
+
+# ── MLflow ───────────────────────────────────────────────────────────────────
+mlflow:
+  experiment_name: "afrr_spike_prediction"
+  model_name:      "afrr_xgboost_spike_classifier"
+  tracking_uri:    "mlruns"
+
+# ── Target ───────────────────────────────────────────────────────────────────
+target: "price_spike_rolling"
+
+# ── Feature Architecture v2 ──────────────────────────────────────────────────
+features:
+
+  # THE HAMMER — physical causal drivers (invariant across years)
+  hammer:
+    - "Unplanned_Flow"
+    - "abs_Unplanned_Flow"
+    - "Unplanned_Flow_rolling4"
+    - "DE_WindSolar_Error"
+    - "Unplanned_Flow_FR_CH"
+    - "abs_Unplanned_Flow_FR_CH"
+    - "Total_Unplanned_Flow"
+
+  # THE ANVIL — market context
+  anvil:
+    - "Sched_DE_CH"
+    - "Sched_DE_CH_delta"
+    - "Sched_FR_CH"
+    - "Unplanned_x_Sched"
+    - "rolling_p90_threshold"
+    - "CH_Load_Forecast"
+    - "CH_Pump_Gen"
+
+  # THE INCENTIVE — economic signal
+  incentive:
+    - "DA_Price_DE"
+    - "DA_Price_CH"
+    - "DA_Price_Spread_DE_CH"
+
+  # AUTOREGRESSIVE v2 — regime-invariant price deltas
+  # REMOVED: raw pos_price_lag1/4/96 (encoded absolute price level → bias)
+  # REPLACED WITH: z-score deviations from 24h rolling median
+  # A +50 EUR jump means the same whether baseline is 150 or 200 EUR
+  autoregressive:
+    - "price_delta_lag1"       # (lag1 - 24h_median) / 24h_std
+    - "price_delta_lag4"       # (lag4 - 24h_median) / 24h_std
+    - "price_delta_lag96"      # (lag96 - 24h_median) / 24h_std
+    - "price_vs_threshold_lag1" # lag1 / rolling_p90_threshold
+    - "price_vs_threshold_lag4" # lag4 / rolling_p90_threshold
+
+  # STRUCTURAL v2 — REMOVED hour, month, day_of_week (temporal bias)
+  # KEPT: minute and is_turnover (genuine physical settlement structure)
+  # minute captures 15-min bid interval boundaries
+  # is_turnover captures XX:00 and XX:45 settlement events
+  structural:
+    - "minute"
+    - "is_turnover"
+
+# ── Monotonic Constraints ─────────────────────────────────────────────────────
+monotonic_constraints:
+  abs_Unplanned_Flow:       1
+  Total_Unplanned_Flow:     1
+  abs_Unplanned_Flow_FR_CH: 1
+  DA_Price_Spread_DE_CH:    1
+  price_vs_threshold_lag1:  1   # higher price vs threshold → higher spike prob
+  price_vs_threshold_lag4:  1
+
+# ── XGBoost Hyperparameters v3 ────────────────────────────────────────────────
+# Change from v2:
+#   colsample_bytree 0.8 → 0.6
+#   Forces XGBoost to build trees WITHOUT price_vs_threshold on 40% of trees
+#   Prevents single-feature dominance, forces model to lean on physical features
+xgboost:
+  n_estimators:         600
+  max_depth:            4
+  learning_rate:        0.05
+  subsample:            0.8
+  colsample_bytree:     0.6     # reduced from 0.8 → prevents price_vs_threshold dominance
+  min_child_weight:     30
+  gamma:                3.0
+  reg_alpha:            0.5
+  reg_lambda:           2.0
+  scale_pos_weight:     9.0
+  eval_metric:          "aucpr"
+  early_stopping_rounds: 50
+  random_state:         42
+  n_jobs:               -1
+
+# ── Calibration ───────────────────────────────────────────────────────────────
+calibration:
+  method:           "isotonic"   # isotonic handles non-monotonic miscalibration
+  calibration_frac: 0.2          # last 20% of train used as calibration set
+
+# ── Cross-Validation ──────────────────────────────────────────────────────────
+cross_validation:
+  n_splits:   5
+  strategy:   "time_series"
+
+# ── Evaluation Metrics ────────────────────────────────────────────────────────
+evaluation:
+  primary_metric:   "pr_auc"
+  secondary_metrics:
+    - "roc_auc"
+    - "f1"
+    - "precision"
+    - "recall"
+    - "brier_score"
+  classification_threshold: 0.5
+
+# ── SHAP / XAI ────────────────────────────────────────────────────────────────
+xai:
+  n_shap_samples: 5000
+  dependence_features:
+    - "abs_Unplanned_Flow"
+    - "DA_Price_Spread_DE_CH"
+    - "rolling_p90_threshold"
+    - "price_delta_lag1"
+  interaction_pairs:
+    - ["Unplanned_Flow", "Sched_DE_CH"]
+    - ["abs_Unplanned_Flow", "DA_Price_DE"]
+  bias_check_features:
+    - "minute"
+    - "is_turnover"

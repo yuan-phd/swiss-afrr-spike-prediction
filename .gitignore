@@ -11,18 +11,28 @@ __pycache__/
 *.pyo
 .python-version
 
-# Data files — never commit raw or processed data to Git
+# Data files — never commit
 data/raw/
 data/processed/
 *.xlsx
-*.csv
 *.parquet
 
-# Results & figures — generated, not source
-01_causal_inference/results/
+# CSV files — generated outputs, not source
+*.csv
 
-# Databricks
-.databricks/
+# MLflow runs — generated locally
+mlruns/
+
+# Results & figures — all generated, not source
+results/
+01_causal_inference/results/
+02_model_training/figures/
+02_model_training/models/
+02_model_training/results/
 
 # macOS
 .DS_Store
+.idea/
+
+# Databricks
+.databricks/
