@@ -15,6 +15,8 @@ Swiss aFRR (automatic Frequency Restoration Reserve) prices exhibit sudden spike
 
 ## Key Findings
 
+![Causal DAG & ML Pipeline](docs/figures/causal_dag.png)
+
 ### Finding 1 — Causal Chain Validated
 Granger causality test confirms that `DE_WindSolar_Error` causes `abs_Unplanned_Flow_DE_CH` at **p = 0.0082** (lag 3-4h). The German wind forecast error today predicts Swiss grid stress 3-4 hours later.
 
