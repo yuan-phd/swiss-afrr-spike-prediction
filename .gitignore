@@ -36,3 +36,13 @@ results/
 
 # Databricks
 .databricks/
+
+# Pipeline
+pipeline/.venv-airflow/
+pipeline/mlflow.db
+pipeline/mlruns/
+pipeline/gunicorn.ctl
+pipeline/mlflow.log
+pipeline/training/challenger_model.json
+pipeline/training/challenger_calibrator.pkl
+pipeline/training/challenger_meta.json
