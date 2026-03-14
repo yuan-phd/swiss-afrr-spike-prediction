@@ -1,6 +1,0 @@
-{
-  "brier_score": 0.058023694704549364,
-  "pr_auc": 0.40456687452032214,
-  "n_features": 24,
-  "target": "price_spike_rolling"
-}
