@@ -1,7 +1,7 @@
 # Swiss aFRR Price Spike Prediction
 ### Causal ML for Cross-Border Energy Flow Anomaly Detection
 
-A production-grade machine learning project that identifies the physical mechanism behind Swiss secondary reserve (aFRR) price spikes, validates it causally, and builds a calibrated risk detection model for energy trading decisions.
+A production-grade machine learning project that identifies the physical mechanism behind Swiss secondary reserve (aFRR) price spikes, validates it causally, builds a calibrated risk detection model for energy trading decisions, and deploys it as an automated daily prediction pipeline.
 
 ---
 
@@ -102,14 +102,84 @@ swiss-afrr-spike-prediction/
 │   │   ├── 03_eda_analysis.py
 │   │   └── 04_visualise.py
 │   └── run_all.py
-└── 02_model_training/               # Phase 2: ML model
-    ├── config/config.yaml           # Single source of truth
-    ├── scripts/
-    │   ├── 00_prepare_features.py   # Validation & readiness check
-    │   ├── 01_train_xgboost.py      # XGBoost + MLflow + isotonic calibration
-    │   ├── 02_evaluate.py           # PR-AUC, calibration, monthly breakdown
-    │   └── 03_explain.py            # Full SHAP XAI suite (4 validation checks)
-    └── run_all.py
+├── 02_model_training/               # Phase 2: ML model
+│   ├── config/config.yaml           # Single source of truth
+│   ├── scripts/
+│   │   ├── 00_prepare_features.py   # Validation & readiness check
+│   │   ├── 01_train_xgboost.py      # XGBoost + MLflow + isotonic calibration
+│   │   ├── 02_evaluate.py           # PR-AUC, calibration, monthly breakdown
+│   │   └── 03_explain.py            # Full SHAP XAI suite (4 validation checks)
+│   └── run_all.py
+└── pipeline/                        # Phase 3: Production pipeline
+    ├── dags/
+    │   ├── energy_dag.py            # Daily prediction DAG (6 tasks)
+    │   └── retrain_dag.py           # Champion/challenger retrain DAG
+    ├── tasks/
+    │   ├── fetch_data.py            # Task 1: ENTSO-E API → S3
+    │   ├── validate_data.py         # Task 2: Pandera schema validation
+    │   ├── build_features.py        # Task 3: Feature engineering → parquet → S3
+    │   ├── predict.py               # Task 4: XGBoost + calibrator → predictions
+    │   ├── evaluate.py              # Task 5: Brier score → MLflow
+    │   └── drift_check.py           # Task 6: PSI drift → trigger retrain
+    ├── training/
+    │   └── train_model.py           # Retrain script with champion/challenger
+    └── setup.sh                     # One-command infrastructure setup
+```
+
+---
+
+## Production Pipeline
+
+The research model is deployed as an automated daily batch pipeline using Apache Airflow.
+
+### Daily Pipeline (energy_pipeline_daily)
+
+```
+fetch_data → validate_data → build_features → predict → evaluate → drift_check
+```
+
+| Task | What it does |
+|---|---|
+| `fetch_data` | Fetches yesterday's ENTSO-E data via API, uploads to S3 |
+| `validate_data` | Pandera schema checks — halts pipeline if data quality fails |
+| `build_features` | Merges ENTSO-E + Swissgrid data, computes all 24 model features |
+| `predict` | Loads XGBoost model + isotonic calibrator, generates spike probabilities |
+| `evaluate` | Computes Brier score, logs metrics to MLflow for monitoring |
+| `drift_check` | Computes PSI on key features — triggers retraining if drift > 0.2 |
+
+### Retrain Pipeline (retrain_dag)
+
+Triggered automatically when PSI drift exceeds 0.2 on any key feature.
+
+```
+train_challenger → compare_models → promote_or_reject
+```
+
+Uses a **champion/challenger pattern** — the new model only replaces the champion if its Brier score improves. Promotion decisions are logged to MLflow.
+
+### Infrastructure
+
+| Service | Purpose |
+|---|---|
+| Apache Airflow | Pipeline orchestration, scheduling, retry logic |
+| LocalStack (S3) | Local S3 for raw data, features, and predictions |
+| MLflow | Tracks Brier score and PSI metrics over time |
+
+### Running the Pipeline
+
+```bash
+# Start all infrastructure
+cd pipeline/
+bash setup.sh
+
+# Trigger a pipeline run
+airflow dags trigger energy_pipeline_daily --run-id "demo_run_1"
+
+# View task execution
+open http://localhost:8080
+
+# View metrics
+open http://localhost:5001
 ```
 
 ---
@@ -173,7 +243,9 @@ Data is fetched via the `entsoe-py` library. Raw data is never committed to this
 |---|---|
 | `xgboost` | Gradient boosted classifier with monotonic constraints |
 | `shap` | SHAP TreeExplainer for global + local explanations |
-| `mlflow` | Experiment tracking, model registry |
+| `mlflow` | Experiment tracking, model registry, metric monitoring |
+| `apache-airflow` | Pipeline orchestration and scheduling |
+| `pandera` | Data validation and schema enforcement |
 | `databricks` | Delta Lake storage, PySpark feature engineering |
 | `entsoe-py` | ENTSO-E Transparency Platform API client |
 | `uv` | Python package management |
@@ -203,8 +275,10 @@ uv run python 01_causal_inference/run_all.py
 # Run model training phase
 uv run python 02_model_training/run_all.py
 
-# View MLflow experiments
-uv run mlflow ui --backend-store-uri mlruns
+# Start production pipeline
+cd pipeline/
+bash setup.sh
+airflow dags trigger energy_pipeline_daily --run-id "demo_run_1"
 ```
 
 ## Limitations & Honest Assessment
@@ -213,10 +287,11 @@ uv run mlflow ui --backend-store-uri mlruns
 - **December 2025**: Model performance degrades in months with near-zero spike rates — the rolling threshold makes very few positive predictions when the market is calm.
 - **`minute` feature**: The 15-minute bid submission boundary has genuine predictive power but also inflates the STRUCTURAL category in SHAP importance. It is physically justified but worth monitoring in production.
 - **Data latency**: In production, ENTSO-E data has a ~1h publication delay. The model is designed for 1-4h ahead risk assessment, not real-time inference.
+- **Swissgrid data**: The pipeline reads the latest available Swissgrid XLSX file. As Swissgrid publishes new files, the pipeline picks them up automatically without code changes.
 
 ---
 
 ## Author
 
 Built as a demonstration of applied causal ML in European energy markets.  
-Domain: Swiss/German electricity balancing markets, ENTSO-E data infrastructure, XGBoost with physical constraints, SHAP-based model validation.
+Domain: Swiss/German electricity balancing markets, ENTSO-E data infrastructure, XGBoost with physical constraints, SHAP-based model validation, Airflow MLOps pipeline.
