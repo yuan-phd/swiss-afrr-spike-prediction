@@ -147,6 +147,8 @@ fetch_data → validate_data → build_features → predict → evaluate → dri
 | `evaluate` | Computes Brier score, logs metrics to MLflow for monitoring |
 | `drift_check` | Computes PSI on key features — triggers retraining if drift > 0.2 |
 
+![Daily DAG](docs/figures/daily_dag.png)
+
 ### Retrain Pipeline (retrain_dag)
 
 Triggered automatically when PSI drift exceeds 0.2 on any key feature.
@@ -156,6 +158,8 @@ train_challenger → compare_models → promote_or_reject
 ```
 
 Uses a **champion/challenger pattern** — the new model only replaces the champion if its Brier score improves. Promotion decisions are logged to MLflow.
+
+![Retrain DAG](docs/figures/retrain_dag.png)
 
 ### Infrastructure
 
