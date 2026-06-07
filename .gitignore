@@ -46,3 +46,11 @@ pipeline/mlflow.log
 pipeline/training/challenger_model.json
 pipeline/training/challenger_calibrator.pkl
 pipeline/training/challenger_meta.json
+
+# Monitoring artifacts
+pipeline/monitoring/statistical/artifacts/
+pipeline/monitoring/clustering/results/
+
+# Phase 2 experiment data and outputs
+afrr-phase2/data/
+afrr-phase2/output/

@@ -1,0 +1,282 @@
+# =============================================================================
+# domain_rules.yaml — Domain Anomaly Detection Rules
+# =============================================================================
+# PURPOSE:
+#   Encode physical and business knowledge as machine-readable rules.
+#   Each rule represents something we KNOW about the data based on physics,
+#   market structure, or operational reality.
+#
+# RULE TYPES:
+#   range            value must be between min and max
+#   non_negative     value must be >= 0
+#   non_positive     value must be <= 0 (e.g. neg_sec_vol_mw)
+#   not_simultaneous two columns must not both be > 0 at same time
+#   capacity_check   value must not exceed physical interconnector capacity
+#
+# SEVERITY:
+#   error    pipeline halts, requires investigation
+#   warning  logged but pipeline continues
+#   info     logged for tracking only
+#
+# REASON:
+#   Each rule includes WHY this constraint exists.
+#   Critical for new team members and audit trails.
+# =============================================================================
+
+# ── Source 1: Swissgrid raw data (15-min aFRR + flows) ──────────────────────
+swissgrid_rules:
+
+  # aFRR positive price — buying balancing energy when system is in deficit
+  - column: pos_sec_price
+    type: range
+    min: -1000              # very rarely negative but can happen
+    max: 15000              # historical max ~6142, allow 2.5x headroom
+    severity: warning
+    reason: "aFRR positive price outside historical range — possible market event or data error"
+
+  # aFRR negative price — getting paid to take excess energy
+  - column: neg_sec_price
+    type: range
+    min: -50000             # historical min ~-14788, allow 3x headroom for extreme events
+    max: 1000
+    severity: warning
+    reason: "aFRR negative price outside historical range"
+
+  # Positive aFRR volume — system in deficit, buying reserves
+  - column: pos_sec_vol_mw
+    type: non_negative
+    severity: error
+    reason: "Positive aFRR volume cannot be negative by definition"
+
+  - column: pos_sec_vol_mw
+    type: range
+    min: 0
+    max: 1500               # historical max ~465, allow large headroom
+    severity: warning
+    reason: "aFRR volume exceeds typical capacity"
+
+  # Negative aFRR volume — system in surplus, reducing generation
+  - column: neg_sec_vol_mw
+    type: non_positive
+    severity: error
+    reason: "Negative aFRR volume cannot be positive by definition (sign convention)"
+
+  - column: neg_sec_vol_mw
+    type: range
+    min: -1500
+    max: 0
+    severity: warning
+    reason: "Negative aFRR volume exceeds typical capacity"
+
+  # Physical cross-border flows — must be non-negative (one direction at a time)
+  - column: CH_DE_mw
+    type: non_negative
+    severity: error
+    reason: "Physical flow CH→DE cannot be negative — flow direction is encoded by separate columns"
+
+  - column: DE_CH_mw
+    type: non_negative
+    severity: error
+    reason: "Physical flow DE→CH cannot be negative — flow direction is encoded by separate columns"
+
+  - column: CH_FR_mw
+    type: non_negative
+    severity: error
+    reason: "Physical flow CH→FR cannot be negative"
+
+  - column: FR_CH_mw
+    type: non_negative
+    severity: error
+    reason: "Physical flow FR→CH cannot be negative"
+
+  # Physical interconnector capacity limits (DE-CH NTC ~5000 MW)
+  - column: CH_DE_mw
+    type: range
+    min: 0
+    max: 6000               # NTC ~5000, allow 20% headroom for emergencies
+    severity: error
+    reason: "CH→DE flow exceeds physical interconnector capacity"
+
+  - column: DE_CH_mw
+    type: range
+    min: 0
+    max: 6000
+    severity: error
+    reason: "DE→CH flow exceeds physical interconnector capacity"
+
+  # FR-CH capacity ~3200 MW NTC
+  - column: CH_FR_mw
+    type: range
+    min: 0
+    max: 4500
+    severity: error
+    reason: "CH→FR flow exceeds physical interconnector capacity"
+
+  - column: FR_CH_mw
+    type: range
+    min: 0
+    max: 4500
+    severity: error
+    reason: "FR→CH flow exceeds physical interconnector capacity"
+
+  # NOTE: Bidirectional flow rule REMOVED — see investigation log.
+  # In 15-min aggregated energy data, both CH_DE_mw and DE_CH_mw can be
+  # non-zero simultaneously due to:
+  #   1. Sub-15min flow direction changes within the window
+  #   2. Multiple physical substations on the DE-CH border with different
+  #      instantaneous flow directions (Laufenburg, Beznau, Tiengen, etc.)
+  #   3. Loop flows through Switzerland — exactly the phenomenon this
+  #      project studies. NOT an anomaly.
+  # The meaningful quantity is the NET flow (actual_net_DE_to_CH),
+  # which is checked in consistency_rules below.
+
+
+# ── Source 2: ENTSO-E raw data (forecasts, schedules, prices) ───────────────
+entsoe_rules:
+
+  # German wind+solar forecast error — can be very large with high renewables
+  - column: DE_WindSolar_Error
+    type: range
+    min: -25000             # historical ~-17500, allow headroom
+    max: 25000              # historical ~+11700, allow headroom
+    severity: warning
+    reason: "DE wind+solar forecast error outside historical range"
+
+  # Scheduled flows — cannot exceed scheduled capacity (~3000 MW typical)
+  - column: Sched_DE_CH
+    type: range
+    min: 0
+    max: 5000               # NTC capacity ceiling
+    severity: error
+    reason: "Scheduled DE→CH exceeds NTC capacity"
+
+  - column: Sched_FR_CH
+    type: range
+    min: 0
+    max: 5000
+    severity: error
+    reason: "Scheduled FR→CH exceeds NTC capacity"
+
+  - column: Sched_CH_IT
+    type: range
+    min: 0
+    max: 6000               # CH-IT ~4200 MW NTC
+    severity: error
+    reason: "Scheduled CH→IT exceeds NTC capacity"
+
+  - column: Sched_IT_CH
+    type: range
+    min: 0
+    max: 4500
+    severity: error
+    reason: "Scheduled IT→CH exceeds NTC capacity"
+
+  # Day-ahead prices — physical floor at -500 EUR/MWh per market rules
+  - column: DA_Price_DE
+    type: range
+    min: -500               # market-imposed price floor
+    max: 4000               # market-imposed price ceiling
+    severity: error
+    reason: "DA price DE outside market price floor/ceiling — likely data error"
+
+  - column: DA_Price_CH
+    type: range
+    min: -500
+    max: 4000
+    severity: error
+    reason: "DA price CH outside market price floor/ceiling"
+
+  # CH load forecast — Swiss demand always positive, has typical range
+  - column: CH_Load_Forecast
+    type: range
+    min: 3000               # minimum nighttime load
+    max: 12000              # maximum winter peak
+    severity: error
+    reason: "CH load forecast outside physical demand range"
+
+  # Swiss hydro pumped storage generation — non-negative (turbine mode)
+  # Note: pump consumption is recorded separately, this is generation only
+  - column: CH_Pump_Gen
+    type: non_negative
+    severity: error
+    reason: "CH pumped storage generation cannot be negative"
+
+  - column: CH_Pump_Gen
+    type: range
+    min: 0
+    max: 5000               # total Swiss pumped storage capacity
+    severity: warning
+    reason: "CH pump generation exceeds installed capacity"
+
+
+# ── Source 3: Engineered features (cross-source derived quantities) ─────────
+feature_rules:
+
+  # Unplanned flow — derived as actual_net - scheduled
+  # Bounded by sum of physical capacity + scheduled capacity
+  - column: abs_Unplanned_Flow
+    type: range
+    min: 0
+    max: 10000
+    severity: warning
+    reason: "Unplanned flow magnitude exceeds plausible range (DE-CH NTC + max schedule)"
+
+  - column: Unplanned_Flow_FR_CH
+    type: range
+    min: -10000
+    max: 10000
+    severity: warning
+    reason: "Unplanned flow FR-CH outside plausible range"
+
+  # Time features — must be valid 15-min boundaries
+  - column: minute
+    type: range
+    min: 0
+    max: 45
+    severity: error
+    reason: "Minute must be 0, 15, 30, or 45 for 15-min data"
+
+  - column: is_turnover
+    type: range
+    min: 0
+    max: 1
+    severity: error
+    reason: "is_turnover must be binary 0 or 1"
+
+  # Spike labels — must be binary
+  - column: price_spike_rolling
+    type: range
+    min: 0
+    max: 1
+    severity: error
+    reason: "Spike label must be binary 0 or 1"
+
+
+# ── Cross-source consistency rules ──────────────────────────────────────────
+# These are LOGICAL rules but encoded here for completeness
+# The logical anomaly detector will use these too
+consistency_rules:
+
+  # Derived field: DA_Price_Spread_DE_CH should equal DA_Price_DE - DA_Price_CH
+  - type: derived_field
+    derived: DA_Price_Spread_DE_CH
+    formula: "DA_Price_DE - DA_Price_CH"
+    tolerance: 0.01
+    severity: error
+    reason: "Spread is a derived field — must equal DE minus CH price exactly"
+
+  # Derived field: actual_net_DE_to_CH should equal DE_CH_mw - CH_DE_mw
+  - type: derived_field
+    derived: actual_net_DE_to_CH
+    formula: "DE_CH_mw - CH_DE_mw"
+    tolerance: 0.1
+    severity: error
+    reason: "Net flow is a derived field — must equal directional difference"
+
+  # Derived field: Unplanned_Flow should equal actual_net - scheduled
+  - type: derived_field
+    derived: Unplanned_Flow
+    formula: "actual_net_DE_to_CH - Sched_DE_CH"
+    tolerance: 0.1
+    severity: error
+    reason: "Unplanned flow is the core causal variable — formula must hold exactly"
