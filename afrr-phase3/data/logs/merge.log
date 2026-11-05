@@ -1,0 +1,55 @@
+======================================================================
+PHASE-3 MERGE (UTC key, no filling)
+======================================================================
+
+[1] Swissgrid
+  Swissgrid 2023: data/raw/EnergieUebersichtCH-2023.xlsx  (labels = interval end)
+    35,040 rows  2022-12-31 23:00:00+00:00 -> 2023-12-31 22:45:00+00:00 (UTC)
+  Swissgrid 2024: data/raw/EnergieUebersichtCH-2024.xlsx  (labels = interval end)
+    35,136 rows  2023-12-31 23:00:00+00:00 -> 2024-12-31 22:45:00+00:00 (UTC)
+  Swissgrid 2025: afrr-phase3/data/raw/EnergieUebersichtCH-2025.xlsx  (labels = interval start)
+    35,040 rows  2024-12-31 23:00:00+00:00 -> 2025-12-31 22:45:00+00:00 (UTC)
+  Swissgrid 2026: afrr-phase3/data/raw/EnergieUebersichtCH-2026.xlsx  (labels = interval start)
+    26,204 rows  2025-12-31 23:00:00+00:00 -> 2026-09-30 21:45:00+00:00 (UTC)
+
+[2] ENTSO-E
+  ENTSO-E: afrr-phase3/data/raw/entsoe_2023_2024.csv (utc)
+    70,176 rows used for local [2023-01-01 00:00, 2025-01-01 00:00)
+  ENTSO-E: afrr-phase3/data/raw/entsoe_2025_2026.csv (utc)
+    61,244 rows used for local [2025-01-01 00:00, 2026-10-01 00:00)
+
+[3] Index checks
+  expected grid: 131,420 instants  2022-12-31 23:00:00+00:00 -> 2026-09-30 21:45:00+00:00
+  Swissgrid rows: 131,420  missing instants: 0
+  ENTSO-E rows:   131,420  missing instants: 0 (left as NaN)  off-grid rows: 0
+  merged: 131,420 rows, 22 columns; strictly increasing, no duplicates, complete 15-min grid
+
+[4] Missing values (NaN count; year = Swiss local calendar year)
+                        total   2023   2024   2025   2026
+column                                                   
+pos_sec_price               0      0      0      0      0
+neg_sec_price               0      0      0      0      0
+pos_sec_vol_mw              0      0      0      0      0
+neg_sec_vol_mw              0      0      0      0      0
+CH_DE_mw                    0      0      0      0      0
+DE_CH_mw                    0      0      0      0      0
+CH_FR_mw                    0      0      0      0      0
+FR_CH_mw                    0      0      0      0      0
+CH_IT_mw                    0      0      0      0      0
+IT_CH_mw                    0      0      0      0      0
+DE_WindSolar_Error          0      0      0      0      0
+Sched_DE_CH                 0      0      0      0      0
+Sched_CH_IT                 0      0      0      0      0
+CH_Pump_Gen                 0      0      0      0      0
+DA_Price_CH                 0      0      0      0      0
+Sched_FR_CH                 0      0      0      0      0
+Sched_IT_CH                 0      0      0      0      0
+CH_Load_Forecast            0      0      0      0      0
+DA_Price_DE                 0      0      0      0      0
+DA_Price_Spread_DE_CH       0      0      0      0      0
+_rows                  131420  35040  35136  35040  26204
+
+[5] Save
+  afrr-phase3/data/merged_2023_2026.parquet
+  afrr-phase3/data/merged_2023_2026.csv
+======================================================================

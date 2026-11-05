@@ -1,0 +1,34 @@
+  ENTSO-E: data/raw/entsoe_swiss_energy_data_v2.csv (naive_local)
+    35,036 rows used for local [2025-01-01, 2026-01-01)
+  ENTSO-E: afrr-phase3/data/raw/entsoe_2025_2026.csv (utc)
+    35,040 rows used for local [2025-01-01, 2026-01-01)
+rows: old=35,036 new=35,040  only_old=0 only_new=4
+instants only in new (local): [Timestamp('2025-10-26 02:00:00+0100', tz='Europe/Zurich'), Timestamp('2025-10-26 02:15:00+0100', tz='Europe/Zurich'), Timestamp('2025-10-26 02:30:00+0100', tz='Europe/Zurich'), Timestamp('2025-10-26 02:45:00+0100', tz='Europe/Zurich')]
+instants only in old (local): []
+               column  n_compared  n_differ  pct_differ  max_abs_diff  n_differ_gt_1  nan_old  nan_new  n_differ_2025  max_abs_2025  n_differ_before_2025-10-01  max_abs_before_2025-10-01  n_differ_from_2025-10-01  max_abs_from_2025-10-01     corr
+   DE_WindSolar_Error       35036      5948       16.98   4129.899406           2979        0        0           5948   4129.899406                        2972                4129.899406                      2976              1399.376172 0.997764
+          Sched_DE_CH       35036        16        0.05    203.700000             12        0        0             16    203.700000                          16                 203.700000                         0                 0.000000 0.999986
+          Sched_CH_IT       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+          CH_Pump_Gen       35036       696        1.99   2290.500000            356        0        0            696   2290.500000                           0                   0.000000                       696              2290.500000 0.996683
+          DA_Price_CH       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+          Sched_FR_CH       35036         4        0.01      8.000000              4        0        0              4      8.000000                           4                   8.000000                         0                 0.000000 1.000000
+          Sched_IT_CH       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+     CH_Load_Forecast       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+          DA_Price_DE       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+DA_Price_Spread_DE_CH       35036         0        0.00      0.000000              0        0        0              0      0.000000                           0                   0.000000                         0                 0.000000 1.000000
+
+cells with |diff| > 1 (or one-sided NaN) by local month:
+  DE_WindSolar_Error: {'2025-03': 6, '2025-12': 2973}
+  Sched_DE_CH: {'2025-08': 12}
+  CH_Pump_Gen: {'2025-10': 224, '2025-12': 132}
+  Sched_FR_CH: {'2025-05': 4}
+
+old v2 DA_Price_DE rows / non-NaN by local year:
+            size  count
+timestamp              
+2023       35032  35032
+2024       35132  35132
+2025       35036  35036
+2026           4      4
+
+Saved afrr-phase3/data/reports/entsoe_2025_diff.csv

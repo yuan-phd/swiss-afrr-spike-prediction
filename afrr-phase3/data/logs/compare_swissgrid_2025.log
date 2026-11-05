@@ -1,0 +1,69 @@
+old rows: 35,040  new rows: 35,040
+timestamp cells differing: 0
+ col_idx                                                       column     unit  n_differ  max_abs_diff  old_nan  new_nan       first_changed        last_changed
+       1 Total energy consumed by end users in the Swiss controlblock      kWh     17668  1.651393e+04        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+       2                   Total energy production Swiss controlblock      kWh     28043  4.904819e+04        0        0 2025-01-01 08:15:00 2025-12-31 23:45:00
+       3                  Total energy consumption Swiss controlblock      kWh     35040  4.921417e+04        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+       4                   Net outflow of the Swiss transmission grid      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+       5                         Grid feed-in Swiss transmission grid      kWh     35040  1.813010e+06        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+       6                            Positive secundary control energy      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+       7                            Negative secundary control energy      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+       8                             Positive tertiary control energy      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+       9                             Negative tertiary control energy      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      10                                 Cross Border Exchange CH->AT      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      11                                 Cross Border Exchange AT->CH      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      12                                 Cross Border Exchange CH->DE      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      13                                 Cross Border Exchange DE->CH      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      14                                 Cross Border Exchange CH->FR      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      15                                 Cross Border Exchange FR->CH      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      16                                 Cross Border Exchange CH->IT      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      17                                 Cross Border Exchange IT->CH      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      18                                                      Transit      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      19                                                       Import      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      20                                                       Export      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      21             Average positive secondary control energy prices Euro/MWh         0  0.000000e+00        0        0                 NaT                 NaT
+      22             Average negative secondary control energy prices Euro/MWh         0  0.000000e+00        0        0                 NaT                 NaT
+      23              Average positive tertiary control energy prices Euro/MWh         0  0.000000e+00        0        0                 NaT                 NaT
+      24              Average negative tertiary control energy prices Euro/MWh         0  0.000000e+00        0        0                 NaT                 NaT
+      25                                         Production Canton AG      kWh     26468  9.917220e+02        0        0 2025-01-01 08:15:00 2025-12-31 23:45:00
+      26                                        Consumption Canton AG      kWh     35039  9.090540e+02        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+      27                                         Production Canton FR      kWh     11716  1.617483e+03        0        0 2025-09-01 00:00:00 2025-12-31 23:45:00
+      28                                        Consumption Canton FR      kWh     11716  1.834074e+03        0        0 2025-09-01 00:00:00 2025-12-31 23:45:00
+      29                                         Production Canton GL      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      30                                        Consumption Canton GL      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      31                                         Production Canton GR      kWh     17667  3.701640e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      32                                        Consumption Canton GR      kWh     17658  3.701640e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      33                                         Production Canton LU      kWh      1298  1.074720e+02        0        0 2025-09-01 07:30:00 2025-09-30 18:30:00
+      34                                        Consumption Canton LU      kWh      1298  1.074720e+02        0        0 2025-09-01 07:30:00 2025-09-30 18:30:00
+      35                                         Production Canton NE      kWh      5775  5.770100e+01        0        0 2025-10-01 00:00:00 2025-12-31 23:45:00
+      36                                        Consumption Canton NE      kWh      6117  4.766700e+01        0        0 2025-10-01 00:00:00 2025-12-31 23:45:00
+      37                                         Production Canton SO      kWh     11393  4.995775e+04        0        0 2025-07-07 06:30:00 2025-12-31 16:45:00
+      38                                        Consumption Canton SO      kWh     12051  4.995775e+04        0        0 2025-07-07 06:30:00 2025-12-31 20:45:00
+      39                                         Production Canton SG      kWh     35030  9.266570e+02        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+      40                                        Consumption Canton SG      kWh     35040  1.634499e+03        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+      41                                         Production Canton TI      kWh     16690  2.174900e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      42                                        Consumption Canton TI      kWh     17015  2.267390e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      43                                         Production Canton TG      kWh     13081  8.455520e+02        0        0 2025-07-23 13:30:00 2025-12-31 23:45:00
+      44                                        Consumption Canton TG      kWh     15381  1.898684e+03        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      45                                         Production Canton VS      kWh      8941  6.311260e+02        0        0 2025-08-01 07:00:00 2025-12-31 23:45:00
+      46                                        Consumption Canton VS      kWh     14693  1.505782e+04        0        0 2025-07-31 23:45:00 2025-12-31 23:45:00
+      47                                    Production Cantons AI, AR      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      48                                   Consumption Cantons AI, AR      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      49                                    Production Cantons BL, BS      kWh     11707  5.987000e+00        0        0 2025-07-01 00:00:00 2025-11-30 23:45:00
+      50                                   Consumption Cantons BL, BS      kWh     14155  4.999900e+01        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      51                                    Production Cantons BE, JU      kWh     17599  8.998570e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      52                                   Consumption Cantons BE, JU      kWh     17668  1.423507e+03        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      53                                    Production Cantons SZ, ZG      kWh      8486  1.458900e+02        0        0 2025-07-01 06:00:00 2025-12-31 23:45:00
+      54                                   Consumption Cantons SZ, ZG      kWh      8745  1.458890e+02        0        0 2025-07-01 06:00:00 2025-12-31 23:45:00
+      55                                Production Cantons OW, NW, UR      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      56                               Consumption Cantons OW, NW, UR      kWh      5408  2.040000e+00        0        0 2025-11-05 16:00:00 2025-12-31 23:45:00
+      57                                    Production Cantons GE, VD      kWh     17668  6.697770e+02        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      58                                   Consumption Cantons GE, VD      kWh     17668  2.461821e+03        0        0 2025-07-01 00:00:00 2025-12-31 23:45:00
+      59                                    Production Cantons SH, ZH      kWh     35021  1.735262e+03        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+      60                                   Consumption Cantons SH, ZH      kWh     35040  1.625635e+03        0        0 2025-01-01 00:00:00 2025-12-31 23:45:00
+      61                                    Production across Cantons      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      62                                   Consumption across Cantons      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      63             Production control area CH - foreign territories      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+      64            Consumption control area CH - foreign territories      kWh         0  0.000000e+00        0        0                 NaT                 NaT
+
+Saved /Users/ye/work/portfolio/swiss-afrr-spike-prediction/afrr-phase3/data/reports/swissgrid_2025_diff.csv
