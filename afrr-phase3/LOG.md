@@ -57,3 +57,53 @@
 
 ### Decisions (confirmed with you)
 - **What gets committed.** The repo `.gitignore` excludes `*.csv`, `*.xlsx` and `*.parquet` ("Data files — never commit"), and origin is public. I committed code, docs, logs and the small report CSVs, force-adding the ignored report CSVs, plus `merged_2023_2026.parquet` as the snapshot. Raw files and the merged CSV are not committed. `.gitignore` is unchanged.
+
+## 2026-11-05: Step 2, evaluation framework and baselines
+
+### What was done
+- **Environment.** Added xgboost 3.4.2 and scikit-learn 1.9.1 to `afrr3` and re-exported `environment.yml`.
+- **New code:** `common.py`, `labels.py`, `features.py`, `metrics.py`, `baselines.py`, `check_leakage.py`, `run_baselines.py`.
+- **Docs:** TASK.md.
+- **Outputs:**
+  - `data/labels.parquet` and `labels_meta.json`;
+  - 20 prediction tables in `predictions/`;
+  - `results/baselines.csv` (long, with CIs), `results/baselines_summary.csv`, `results/task_stats.json`, `results/run_baselines.log`.
+- `python afrr-phase3/run_baselines.py` rebuilds everything in about 3 min.
+
+### Decisions (confirmed with you before coding)
+1. Observed rows are allowed up to T − 15 min. `p_lag0` is dropped, and every observed-series lag starts at 1.
+2. Day-ahead availability: the next day's values are available only from 13:00 local. For h=96, 54.17 % of origins have NaN T+h day-ahead features.
+3. The label threshold is NaN during the 90-day warm-up. Those rows are excluded from training and evaluation.
+4. Models use `thr_known` = threshold(T); labels and metrics use threshold(T+h).
+5. The training tail (last 15 %) is split in half: early stopping, then isotonic calibration. Every part boundary has an h-step purge gap, and there is no refit.
+6. Swiss national holidays are hard-coded and checked against an Easter computation.
+
+### Decisions made while implementing (flag if you disagree)
+- **`thr_known` as an XGBoost feature.** It is not in the requested list, but the label is relative to this rolling threshold, and it uses only past prices.
+- **Seasonal persistence at h=96** uses the row at T−96 (2 days before the target). "Same time one day before the target" would be the row at T, which isn't observed at T.
+- **`xgb_clf` has no price quantiles.** All 21 quantile columns are NaN, and the price metrics are NaN for it. The schema allows this for spike-only models.
+- **Training origins are full hours only**, as in the test periods. The climatology quantiles are also computed on full-hour rows.
+- **Quantile → probability clamp** is [0.01, 0.99] beyond the outer quantiles.
+- **`pr_auc`** is average precision (sklearn), not trapezoidal area under the PR curve.
+- **Leakage-check tolerance** is 1e-9. Rolling sums restart on the masked slice, so the comparison can't be bit-exact.
+
+### What went wrong (all caught before the final run)
+- **Probability clamp bug.** `metrics.py` first set the upper clamp to 1 − 0.99 = 0.01, so every interpolated probability came out as 0.01. A unit test caught it before any results were produced.
+- **Lost timezone.** `labels.py` used `.values` on the tz-aware timestamp, which drops the timezone, and the comparison with the UTC split bounds then failed. Fixed by keeping the series.
+- **Ambiguous edge cases.** Leakage-check edge cases at the autumn repeated hour raised `AmbiguousTimeError`. They are now matched on local wall-clock time, which picks up both copies.
+- **The leakage check got a negative control.** It plants two leaky features (price at T, and DA at T+h without the 13:00 rule) and asserts that both are detected. It ran green before this was added, so it needed proof that it can fail.
+
+### Observations to keep in mind (not acted on: no tuning on test)
+- **Shifted early-stopping part.** train/es (2024-09-13 → 11-07) has spike rate 0.19, against 0.12 in train/fit and 0.116 in train/cal. The classifier early-stopped after only 81 trees (h=4) and 46 (h=96).
+- **The classifier is weaker than the quantile model's spike probability.** At h=4, test A PR-AUC is 0.164 for `xgb_clf` and 0.197 for `xgb_quantile`; test B is 0.310 vs 0.398.
+- **Quantile intervals are too narrow.** `xgb_quantile` covers less than nominal: [q10, q90] 0.70–0.77 against 0.80, [q05, q95] 0.82–0.87 against 0.90.
+- **Base rate drops in test A.** Spike rate is 0.088 at full hours in test A vs 0.125 in train, so Brier skill is small for every model (`xgb_quantile` h=4: 0.078 vs ref 0.082).
+- **These numbers are much lower than the earlier quoted figures** (PR-AUC 0.390 etc.). Those came from a nowcast with target leakage. They are not comparable.
+
+## 2026-11-05: Step 2 additions (baselines accepted as is, no retuning)
+- **Stratification.** Added `metrics.covariate_known()` and `evaluate(..., stratify_covariate=True)`. For h = 96, every metric is also reported for origins with and without the T+h day-ahead values (T ≥ 13:00 local or not). `results/baselines.csv` now has a `covariate_known` column (all | known | unknown) and 1,040 rows. Rerunning `run_baselines.py` reproduced every `all` value exactly.
+- **What the split shows (h = 96, `xgb_quantile`):**
+  - Test B PR-AUC is 0.445 [0.365, 0.514] when the values are known and 0.205 [0.171, 0.245] when they are not.
+  - Test A shows almost no difference: 0.178 vs 0.158.
+  - The strata also differ by target time of day and spike rate, so this is not a pure covariate effect (TASK.md).
+- **TASK.md:** `xgb_quantile` is the primary XGBoost model. `xgb_clf` is secondary, with early stopping cut short (81 / 46 trees) by the 0.19 spike rate in Sep–Nov 2024.

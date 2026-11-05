@@ -1,0 +1,85 @@
+{
+  "train_spike_rate": 0.125130005200208,
+  "split_bounds_utc": [
+    "2022-12-31 23:00:00+00:00",
+    "2024-09-13 07:00:00+00:00",
+    "2024-11-07 03:00:00+00:00",
+    "2024-12-31 23:00:00+00:00"
+  ],
+  "horizons": {
+    "4": {
+      "train_parts": {
+        "fit": {
+          "n": 12752,
+          "first_origin": "2023-03-31 22:00:00+00:00",
+          "last_target": "2024-09-13 06:00:00+00:00",
+          "spike_rate": 0.1191969887076537
+        },
+        "es": {
+          "n": 1315,
+          "first_origin": "2024-09-13 07:00:00+00:00",
+          "last_target": "2024-11-07 02:00:00+00:00",
+          "spike_rate": 0.19163498098859316
+        },
+        "cal": {
+          "n": 1315,
+          "first_origin": "2024-11-07 03:00:00+00:00",
+          "last_target": "2024-12-31 22:00:00+00:00",
+          "spike_rate": 0.11634980988593156
+        }
+      },
+      "xgb_clf_best_iteration": 81,
+      "xgb_quantile_best_iteration": 921,
+      "periods": {
+        "test_A": {
+          "n_origins": 8759,
+          "da_tph_nan_fraction": 0.0,
+          "n_label_nan": 0
+        },
+        "test_B": {
+          "n_origins": 6550,
+          "da_tph_nan_fraction": 0.0,
+          "n_label_nan": 0
+        }
+      },
+      "train_da_tph_nan_fraction": 0.0
+    },
+    "96": {
+      "train_parts": {
+        "fit": {
+          "n": 12752,
+          "first_origin": "2023-03-30 23:00:00+00:00",
+          "last_target": "2024-09-13 06:00:00+00:00",
+          "spike_rate": 0.1191969887076537
+        },
+        "es": {
+          "n": 1292,
+          "first_origin": "2024-09-13 07:00:00+00:00",
+          "last_target": "2024-11-07 02:00:00+00:00",
+          "spike_rate": 0.19349845201238391
+        },
+        "cal": {
+          "n": 1292,
+          "first_origin": "2024-11-07 03:00:00+00:00",
+          "last_target": "2024-12-31 22:00:00+00:00",
+          "spike_rate": 0.11609907120743033
+        }
+      },
+      "xgb_clf_best_iteration": 46,
+      "xgb_quantile_best_iteration": 723,
+      "periods": {
+        "test_A": {
+          "n_origins": 8736,
+          "da_tph_nan_fraction": 0.5416666666666666,
+          "n_label_nan": 0
+        },
+        "test_B": {
+          "n_origins": 6527,
+          "da_tph_nan_fraction": 0.5417496552780757,
+          "n_label_nan": 0
+        }
+      },
+      "train_da_tph_nan_fraction": 0.5416014606155451
+    }
+  }
+}

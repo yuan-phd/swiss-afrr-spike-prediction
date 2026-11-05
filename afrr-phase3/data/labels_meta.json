@@ -1,0 +1,35 @@
+{
+  "train_spike_rate": 0.125130005200208,
+  "train_spike_rate_definition": "mean spike label over full-hour rows of the training period with a valid label",
+  "first_labelled_utc": "2023-03-31 23:00:00+00:00",
+  "per_year": {
+    "2023": {
+      "rows": 35040,
+      "labelled": 26400,
+      "spike_rate": 0.0865530303030303,
+      "labelled_full_hour": 6600,
+      "spike_rate_full_hour": 0.10363636363636364
+    },
+    "2024": {
+      "rows": 35136,
+      "labelled": 35136,
+      "spike_rate": 0.11885245901639344,
+      "labelled_full_hour": 8784,
+      "spike_rate_full_hour": 0.14127959927140255
+    },
+    "2025": {
+      "rows": 35040,
+      "labelled": 35040,
+      "spike_rate": 0.08253424657534246,
+      "labelled_full_hour": 8760,
+      "spike_rate_full_hour": 0.08824200913242009
+    },
+    "2026": {
+      "rows": 26204,
+      "labelled": 26204,
+      "spike_rate": 0.11948557472141658,
+      "labelled_full_hour": 6551,
+      "spike_rate_full_hour": 0.13585712105022135
+    }
+  }
+}
