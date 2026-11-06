@@ -107,3 +107,33 @@
   - Test A shows almost no difference: 0.178 vs 0.158.
   - The strata also differ by target time of day and spike rate, so this is not a pure covariate effect (TASK.md).
 - **TASK.md:** `xgb_quantile` is the primary XGBoost model. `xgb_clf` is secondary, with early stopping cut short (81 / 46 trees) by the 0.19 spike rate in Sep–Nov 2024.
+
+## 2026-11-06: Step 3 setup, foundation models (before the full run)
+- **Environment.** New env `afrr3-fm`, exported to `environment-fm.yml`. Timestral and Chronos-2 installed together without conflicts, so there is one env:
+  - Python 3.11, torch 2.15.0 (CPU), timestral 1.0.0 (git `a534bdbd`), chronos-forecasting 2.3.2, transformers 5.22.1, accelerate, einops.
+  - pandas is pinned to 2.3.3, as in `afrr3`.
+  - TimesFM 2.5 runs in the existing `timesfm` env through `fm_timesfm_worker.py`. That env has no pyarrow, so data goes over `.npz`; the env was not modified.
+  - Weights: `mistralai/Timestral-209M` @ `9874d252`, `amazon/chronos-2` @ `29ec3766`, `google/timesfm-2.5-200m-pytorch` (cached copy from phase 2).
+- **Protocol.**
+  - Context is the 2016 rows ending at T − 15 min.
+  - `prediction_length` = 97. Step k is row T + (k−1)·15 min, so h=4 is step 5 and h=96 is step 97. Decided with the user: steps 4 and 96 would forecast one row too early.
+  - A dummy forecast equal to the true price gives MAE 0 at both horizons, which confirms the mapping.
+  - Known-future inputs: 7 day-ahead columns with the 13:00 rule (NaN until published), plus categorical hour, day of week and holiday. Rows after the end of the data are NaN, which affects only the last day of test B.
+  - TimesFM has deciles only. q01 = q05 = q10 and q95 = q99 = q90; q15 … q85 are linear interpolation between deciles. This is flagged as `quantile_note` in the results tables.
+  - 15,309 origins: the union of the Step-2 test origins. Of the 15,312 test-period hours, the last origin of each period has its T+4 target outside the period.
+- **Input leakage check.** For every configuration, inputs built from data masked with `check_leakage.masked_slice` equal the inputs from the full data (206 origins each).
+- **MPS vs CPU, 20 origins.** Everything runs on CPU with 8 threads.
+  - Timestral fails on MPS: it uses float64 internally.
+  - Chronos-2 aborts with a native Metal NSException (torch 2.15, macOS 14.6).
+  - TimesFM matches (max |Δq| 5.2e-4) but is slower on MPS (0.38 vs 0.22 s per call). Passing the check only allows MPS, so CPU was kept. Records are in `results/runtime/mps_check_*.json`.
+- **Batching, 20 origins: batched vs single calls, tolerance 1e-4.**
+  - TimesFM: max |Δq| = 0 at batch 32, so it is batched with B = 32 (0.054 s per origin vs 0.22).
+  - Timestral and Chronos-2: differences of 0.9e-3 to 2.6e-3 (about 100 float32 ULPs; up to 0.5 % relative near zero). They fail the tolerance and stay at one origin per call.
+  - Records: `results/runtime/batch_check_*.json`.
+- **Two configurations in parallel at 4 threads each** was not faster (Chronos-2 both 0.87 s per origin vs 0.54 s at 8 threads alone; Timestral past_only 1.30 vs 0.72), so configurations run sequentially.
+- **Timing, 50 origins.** Seconds per origin for none / past_only / known_future / both:
+  - Timestral: 0.20 / 0.72 / 1.06 / 1.71
+  - Chronos-2: 0.10 / 0.25 / 0.37 / 0.54
+  - TimesFM: 0.22, or 0.054 batched
+  - All nine would take about 23 h. Batch 1, about 10.4 h, as decided by the user: the four Chronos-2 configurations, TimesFM, `timestral_none` and `timestral_past_only`. Batch 2 (`timestral_known_future`, `timestral_both`, about 12 h) is not started.
+- **Defaults kept.** Timestral `symmetric_averaging=True` and `clip_nonnegative=True` (clipping only applies if the whole context is ≥ 0). TimesFM uses the phase-2 `ForecastConfig` (no positivity, flip invariance, continuous quantile head, quantile-crossing fix). Chronos-2 uses `cross_learning=False`.
