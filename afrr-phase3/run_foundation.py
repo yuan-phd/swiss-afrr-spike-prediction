@@ -18,6 +18,9 @@ run_foundation.py — run the foundation-model configurations and evaluate them.
        results/runtime.csv      seconds per call / per origin, peak memory
      quantile_note marks TimesFM: it has only the deciles, so q01 = q05 = q10,
      q95 = q99 = q90 and q15 .. q85 are interpolated linearly between deciles.
+  3. sensitivity variant timesfm_none_extrap (make_timesfm_extrap): the same
+     TimesFM forecasts with linearly extrapolated tails, built from the saved
+     timesfm_none tables (no rerun) and evaluated next to the original.
 
 Batch sizes (BATCH): origins per forecast call. Batched calls must equal single
 calls to within 1e-4 (foundation.py --batch-check, 20 origins). Only TimesFM
@@ -46,6 +49,9 @@ import metrics as M  # noqa: E402
 BATCH = {'timesfm_none': 32}            # default 1
 THREADS = 8
 TIMESFM_NOTE = 'timesfm_deciles: q01=q05=q10, q95=q99=q90, q15..q85 interpolated'
+EXTRAP = 'timesfm_none_extrap'
+EXTRAP_NOTE = ('timesfm_deciles, tail sensitivity: q95/q99 extrapolated from the q80-q90 slope, '
+               'q05/q01 from the q10-q20 slope (clipped at 0), q15..q85 interpolated')
 BASELINE_QMODELS = ['persistence', 'seasonal_persistence', 'climatology', 'xgb_quantile']
 ALL_NAMES = [fm.name_of(m, k) for m, k in fm.CONFIGS]
 
@@ -71,7 +77,38 @@ def load_preds(names):
 
 
 def note_of(model):
+    if str(model) == EXTRAP:
+        return EXTRAP_NOTE
     return TIMESFM_NOTE if str(model).startswith('timesfm') else ''
+
+
+def make_timesfm_extrap():
+    """Sensitivity variant of TimesFM's tails, built from the saved timesfm_none
+    tables (no rerun). The deciles q10..q90 and the interpolated q15..q85 are
+    unchanged. Tails extend the outer decile slopes linearly in tau:
+      q95 = q90 + 0.5 (q90 - q80),  q99 = q90 + 0.9 (q90 - q80)
+      q05 = q10 - 0.5 (q20 - q10),  q01 = q10 - 0.9 (q20 - q10), both clipped at 0
+    spike_prob = metrics.prob_exceed(quantiles, threshold(T)), as for every model."""
+    lab = pd.read_parquet(c.LABELS)
+    thr_at = pd.Series(lab.threshold.to_numpy(), index=pd.DatetimeIndex(lab.timestamp_utc))
+    for h in c.HORIZONS:
+        for per in c.TEST_PERIODS:
+            t = pd.read_parquet(c.pred_path('timesfm_none', h, per))
+            up = t.q90 - t.q80
+            lo = t.q20 - t.q10
+            t['q95'] = t.q90 + 0.5 * up
+            t['q99'] = t.q90 + 0.9 * up
+            t['q05'] = np.maximum(t.q10 - 0.5 * lo, 0.0)
+            t['q01'] = np.maximum(t.q10 - 0.9 * lo, 0.0)
+            # keep monotone where q10 < 0 (the clip at 0 would lift q01/q05 above q10)
+            t['q05'] = np.minimum(t.q05, t.q10)
+            t['q01'] = np.minimum(t.q01, t.q05)
+            Q = t[c.QCOLS].to_numpy()
+            assert (np.diff(Q, axis=1) >= 0).all()
+            thr_T = thr_at.reindex(pd.DatetimeIndex(t.origin_utc)).to_numpy()
+            tab = c.make_pred_table(EXTRAP, per, h, t.origin_utc, t.target_utc, t.y, t.threshold, Q,
+                                    M.prob_exceed(Q, thr_T))
+            c.save_pred_table(tab)
 
 
 # ── secondary table on the 9 common levels ──────────────────────────────────
@@ -143,7 +180,7 @@ def evaluate(names):
     c9.to_csv(os.path.join(c.RESULTS_DIR, 'common9.csv'), index=False)
 
     rt = []
-    for n in names:
+    for n in [n for n in names if n != EXTRAP]:
         r = json.load(open(os.path.join(fm.RUNTIME_DIR, f'{n}.json')))
         r.pop('versions', None)
         rt.append(r)
@@ -171,6 +208,9 @@ def main():
                 continue
             run_config(n)
     done = [n for n in ALL_NAMES if complete(n)]
+    if 'timesfm_none' in done:
+        make_timesfm_extrap()
+        done.append(EXTRAP)
     evaluate(done)
     print(f'\n[done] {time.strftime("%Y-%m-%d %H:%M:%S")}  total {(time.time() - t0) / 3600:.2f} h', flush=True)
 

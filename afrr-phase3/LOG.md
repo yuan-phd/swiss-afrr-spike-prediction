@@ -176,3 +176,20 @@
   - Chronos-2 q01 < 0 in 50 % of rows, against 0.06 % negative prices (Timestral 6 %, TimesFM 3 %).
   - Timestral `clip_nonnegative` applies whenever the whole context is ≥ 0, which is nearly always.
   - `results/common9.csv` holds the secondary table on q10..q90 for all quantile models.
+
+## 2026-11-06: TimesFM tail sensitivity (timesfm_none_extrap)
+- **What.** The same TimesFM forecasts with different outer quantiles, built from the saved `timesfm_none` tables (no rerun; `run_foundation.make_timesfm_extrap`).
+  - q95 = q90 + 0.5 (q90 − q80) and q99 = q90 + 0.9 (q90 − q80).
+  - q05 = q10 − 0.5 (q20 − q10) and q01 = q10 − 0.9 (q20 − q10), clipped at 0.
+  - Where q10 < 0 (3.3 % of rows), clipping at 0 would put q05 and q01 above q10, so they are capped at q10 to keep the quantiles monotone.
+  - spike_prob = `prob_exceed(q, threshold(T))`, as for every model.
+  - The original `timesfm_none` row is kept. The variant has its own `quantile_note`.
+  - Re-evaluating reproduced all 1,736 existing rows of `foundation.csv` exactly. On the 9 common levels the variant equals the original by construction (`common9.csv`).
+- **Results** (PR-AUC / Brier / CRPS / cov 05–95, original → extrap):
+  - h=4 A: 0.209 → 0.226 / 0.0759 → 0.0750 / 41.6 → 41.1 / 0.802 → 0.843
+  - h=4 B: 0.391 → 0.409 / 0.1015 → 0.1001 / 27.8 → 27.5 / 0.773 → 0.814
+  - h=96 A: 0.138 → 0.151 / 0.0818 → 0.0803 / 44.8 → 44.3 / 0.811 → 0.860
+  - h=96 B: 0.275 → 0.285 / 0.1131 → 0.1117 / 32.4 → 31.9 / 0.769 → 0.822
+- **Reading.**
+  - The flat tails cost TimesFM about 0.01–0.02 PR-AUC. The share of spike_prob at the 0.01 clamp drops from 69 % to 51 %.
+  - The ranking does not change: TimesFM stays below Chronos-2 and Timestral everywhere. With extrapolated tails it slightly passes xgb_quantile at h=4 (test B 0.409 vs 0.398, CIs overlap) but not at h=96.
