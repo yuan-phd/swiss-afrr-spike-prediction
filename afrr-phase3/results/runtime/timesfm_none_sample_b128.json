@@ -1,0 +1,24 @@
+{
+  "model": "timesfm_none",
+  "batch_size": 128,
+  "n_calls": 2,
+  "n_origins": 256,
+  "sec_per_call_mean": 7.957310374826193,
+  "sec_per_call_median": 7.957310374826193,
+  "sec_per_call_p95": 8.125329349655658,
+  "sec_per_origin": 0.06216648730332963,
+  "sec_total_calls": 15.914620749652386,
+  "wall_seconds": 18.025564908981323,
+  "peak_rss_mb": 4554.765625,
+  "peak_mps_driver_mb": 0.0,
+  "device": "cpu",
+  "threads": 8,
+  "context": 2016,
+  "pred_len": 97,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}

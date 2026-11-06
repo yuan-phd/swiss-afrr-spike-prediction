@@ -1,0 +1,15 @@
+{
+  "model": "chronos2_past_only",
+  "n_origins": 20,
+  "batch_size": 20,
+  "max_abs_diff_quantiles": 0.001953125,
+  "pass_1e-4": false,
+  "sec_per_origin_single": 0.2537426229566336,
+  "sec_per_origin_batched": 0.2110863249981776,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}

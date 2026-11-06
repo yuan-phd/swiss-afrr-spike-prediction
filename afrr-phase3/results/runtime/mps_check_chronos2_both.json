@@ -1,0 +1,15 @@
+{
+  "model": "chronos2_both",
+  "n_origins": 20,
+  "max_abs_diff_quantiles": null,
+  "sec_per_call_cpu": 0.5278099706629291,
+  "sec_per_call_mps": null,
+  "mps_error": "exit -6: libc++abi: terminating due to uncaught exception of type NSException",
+  "use_mps": false,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}

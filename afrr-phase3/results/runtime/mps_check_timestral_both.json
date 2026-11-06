@@ -1,0 +1,15 @@
+{
+  "model": "timestral_both",
+  "n_origins": 20,
+  "max_abs_diff_quantiles": null,
+  "sec_per_call_cpu": 1.6800827665254474,
+  "sec_per_call_mps": null,
+  "mps_error": "exit 1: TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.",
+  "use_mps": false,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}

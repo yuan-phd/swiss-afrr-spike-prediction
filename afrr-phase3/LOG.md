@@ -137,3 +137,42 @@
   - TimesFM: 0.22, or 0.054 batched
   - All nine would take about 23 h. Batch 1, about 10.4 h, as decided by the user: the four Chronos-2 configurations, TimesFM, `timestral_none` and `timestral_past_only`. Batch 2 (`timestral_known_future`, `timestral_both`, about 12 h) is not started.
 - **Defaults kept.** Timestral `symmetric_averaging=True` and `clip_nonnegative=True` (clipping only applies if the whole context is ≥ 0). TimesFM uses the phase-2 `ForecastConfig` (no positivity, flip invariance, continuous quantile head, quantile-crossing fix). Chronos-2 uses `cross_learning=False`.
+
+## 2026-11-06: Step 3 batch 1 results (7 foundation configurations)
+- **Run.** `run_foundation.py` ran timesfm_none, the four Chronos-2 configurations, timestral_none and timestral_past_only.
+  - 01:12 → 10:57 CET, 9.76 h, against an estimate of 10.4 h. CPU, 8 threads, sequential.
+  - The log (`results/foundation_batch1.log`) has no warnings, errors, NaN or resumes, only torch's macOS "Redirects are currently not supported" note.
+  - Batch 2 (`timestral_known_future`, `timestral_both`) is not run.
+- **Results.** All origins (`covariate_known = all`), with 95 % day-block bootstrap CIs in `results/foundation.csv` and `all.csv`.
+  - Each cell is PR-AUC / CRPS / Brier.
+  - Brier ref: h=4 0.0818 (A), 0.1175 (B); h=96 0.0820 (A), 0.1179 (B).
+
+| model | h=4 test A | h=4 test B | h=96 test A | h=96 test B |
+|---|---|---|---|---|
+| climatology | 0.088 / 58.5 / 0.0818 | 0.136 / 45.6 / 0.1175 | 0.088 / 58.5 / 0.0820 | 0.136 / 45.7 / 0.1179 |
+| xgb_quantile | 0.197 / 42.3 / 0.0778 | 0.398 / 27.1 / 0.1014 | 0.168 / 45.4 / 0.0801 | 0.349 / 31.3 / 0.1067 |
+| timesfm_none | 0.209 / 41.6 / 0.0759 | 0.391 / 27.8 / 0.1015 | 0.138 / 44.8 / 0.0818 | 0.275 / 32.4 / 0.1131 |
+| chronos2_none | 0.258 / 39.3 / 0.0735 | 0.433 / 26.2 / 0.0974 | 0.183 / 42.7 / 0.0783 | 0.315 / 30.4 / 0.1084 |
+| chronos2_past_only | 0.274 / 38.8 / 0.0725 | 0.458 / 26.0 / 0.0957 | 0.193 / 42.8 / 0.0787 | 0.326 / 30.6 / 0.1095 |
+| chronos2_known_future | 0.268 / 38.7 / 0.0733 | 0.461 / 25.5 / 0.0944 | 0.218 / 41.5 / 0.0768 | 0.374 / 28.8 / 0.1042 |
+| chronos2_both | 0.271 / 38.6 / 0.0729 | 0.470 / 25.4 / 0.0937 | 0.217 / 41.3 / 0.0762 | 0.377 / 28.6 / 0.1037 |
+| timestral_none | 0.275 / 38.4 / 0.0721 | 0.442 / 25.8 / 0.0961 | 0.194 / 41.8 / 0.0772 | 0.314 / 30.1 / 0.1079 |
+| timestral_past_only | 0.288 / 37.9 / 0.0713 | 0.458 / 25.4 / 0.0947 | 0.199 / 41.7 / 0.0768 | 0.310 / 30.0 / 0.1085 |
+
+- **Coverage, [q10, q90] / [q05, q95]** (nominal 0.80 / 0.90):
+  - Chronos-2 and Timestral: 0.76–0.83 / 0.87–0.92.
+  - xgb_quantile: 0.70–0.77 / 0.82–0.87.
+  - TimesFM: 0.77–0.81 / the same values, by construction of its tails.
+- **h=96 PR-AUC by `covariate_known` (known / unknown):**
+  - Test B: chronos2_none 0.374 / 0.233; chronos2_known_future 0.467 / 0.246; chronos2_both 0.473 / 0.243; xgb_quantile 0.445 / 0.205.
+  - Test A, "known": every model without day-ahead covariates is worse here (e.g. chronos2_none 0.139 vs 0.226). The strata differ by time of day (TASK.md caveat).
+- **Reading.**
+  - h=4: every Chronos-2 and Timestral configuration beats xgb_quantile on PR-AUC, CRPS and Brier in both periods.
+  - h=96: only Chronos-2 with known-future covariates beats xgb_quantile on PR-AUC, and the CIs overlap.
+  - Past-only covariates add little, and slightly hurt at h=96 test B. Known-future covariates are what helps at h=96.
+- **Runtime** (`results/runtime.csv`). Seconds per origin: timestral none 0.214, past_only 0.754; chronos2 0.111 / 0.241 / 0.369 / 0.530; timesfm 0.060 at batch 32. Peak RSS is 1.4–2.3 GB.
+- **Observations, not acted on.**
+  - TimesFM spike_prob = 0.01 for 69 % of rows. With q95 = q99 = q90, `prob_exceed` jumps from about 0.10 to the 0.01 clamp whenever the threshold is ≥ q90. Its spike metrics partly reflect this tail rule.
+  - Chronos-2 q01 < 0 in 50 % of rows, against 0.06 % negative prices (Timestral 6 %, TimesFM 3 %).
+  - Timestral `clip_nonnegative` applies whenever the whole context is ≥ 0, which is nearly always.
+  - `results/common9.csv` holds the secondary table on q10..q90 for all quantile models.

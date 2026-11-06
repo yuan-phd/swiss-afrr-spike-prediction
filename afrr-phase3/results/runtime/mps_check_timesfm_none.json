@@ -1,0 +1,15 @@
+{
+  "model": "timesfm_none",
+  "n_origins": 20,
+  "max_abs_diff_quantiles": 0.000518798828125,
+  "sec_per_call_cpu": 0.21809546442236752,
+  "sec_per_call_mps": 0.3833046312909573,
+  "mps_error": null,
+  "use_mps": true,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}

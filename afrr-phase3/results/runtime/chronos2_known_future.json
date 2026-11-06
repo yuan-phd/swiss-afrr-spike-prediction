@@ -1,0 +1,24 @@
+{
+  "model": "chronos2_known_future",
+  "batch_size": 1,
+  "n_calls": 15309,
+  "n_origins": 15309,
+  "sec_per_call_mean": 0.36851351540345273,
+  "sec_per_call_median": 0.37195704178884625,
+  "sec_per_call_p95": 0.40605117501690985,
+  "sec_per_origin": 0.36851351540345273,
+  "sec_total_calls": 5641.573407311458,
+  "wall_seconds": 5649.523467063904,
+  "peak_rss_mb": 1936.25,
+  "peak_mps_driver_mb": 0.0,
+  "device": "cpu",
+  "threads": 8,
+  "context": 2016,
+  "pred_len": 97,
+  "versions": {
+    "torch": "2.15.0",
+    "timestral": "1.0.0",
+    "chronos": "2.3.2",
+    "transformers": "5.22.1"
+  }
+}
